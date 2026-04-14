@@ -146,7 +146,7 @@ async def parse_paper_references(filename: str):
     filepath = os.path.abspath(os.path.join(upload_dir_abs, filename))
 
     # Prevent path traversal
-    if not filepath.startswith(upload_dir_abs + os.sep):
+    if os.path.commonpath([filepath, upload_dir_abs]) != upload_dir_abs:
         raise HTTPException(status_code=400, detail="Invalid filename.")
 
     if not os.path.exists(filepath):
