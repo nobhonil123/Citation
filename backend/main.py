@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import uuid
 from pathlib import Path
@@ -104,17 +105,21 @@ async def generate_citation(request: MetadataRequest):
 
 @app.post("/api/parse-references/{filename}")
 async def parse_references(filename: str):
-    # Prevent path traversal by resolving and confirming the path stays within UPLOAD_DIR
-    safe_filename = Path(filename).name
-    file_path = (UPLOAD_DIR / safe_filename).resolve()
-    upload_dir_resolved = UPLOAD_DIR.resolve()
-    if not str(file_path).startswith(str(upload_dir_resolved) + "/"):
+    # Strip all directory components; reject names with unsafe characters
+    safe_name = Path(filename).name
+    if not re.match(r'^[a-f0-9_.\-]+$', safe_name, re.IGNORECASE):
         raise HTTPException(status_code=400, detail="Invalid filename")
-    if not file_path.exists():
+    # Resolve the matching file from the trusted uploads directory listing
+    # to avoid tainted-path operations flagged by CodeQL
+    matched = next(
+        (p for p in UPLOAD_DIR.iterdir() if p.name == safe_name),
+        None,
+    )
+    if matched is None:
         raise HTTPException(status_code=404, detail="File not found")
 
     try:
-        references = reference_parser.parse_references(str(file_path))
+        references = reference_parser.parse_references(str(matched))
         enriched = []
         for ref in references:
             meta = metadata_extractor.enrich_metadata(ref)

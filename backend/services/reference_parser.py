@@ -18,7 +18,7 @@ REF_SECTION_RE = re.compile(
 
 NUMBERED_RE = re.compile(r"^\s*[\[\(]?\d+[\]\)\.]\s+")
 AUTHOR_YEAR_RE = re.compile(
-    r"^[A-Z][a-z]+(?:,\s+[A-Z]\.)?\s*[\(\[]\d{4}[\)\]]"
+    r"^[A-Z][a-z]+(?:,\s+[A-Z]\.)?\s*[\(\[]\d{4}[\)\]]\b"
 )
 DOI_RE = re.compile(r"\b(10\.\d{4,9}/[^\s\"'<>]+)", re.IGNORECASE)
 YEAR_RE = re.compile(r"[\(\[](\d{4})[\)\]]")
