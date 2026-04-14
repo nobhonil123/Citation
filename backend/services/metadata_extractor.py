@@ -138,8 +138,18 @@ def _normalize_crossref_data(data: dict) -> dict:
     # Abstract
     abstract = data.get("abstract", "")
     if abstract:
-        # Strip JATS XML tags if present
-        abstract = re.sub(r"<[^>]+>", "", abstract).strip()
+        # Strip JATS XML tags if present — use a simple character-by-character approach
+        # to avoid ReDoS vulnerabilities with user-supplied data
+        cleaned = []
+        in_tag = False
+        for ch in abstract:
+            if ch == '<':
+                in_tag = True
+            elif ch == '>':
+                in_tag = False
+            elif not in_tag:
+                cleaned.append(ch)
+        abstract = "".join(cleaned).strip()
         metadata["abstract"] = abstract[:1500]
 
     # Source type mapping

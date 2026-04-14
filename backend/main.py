@@ -3,6 +3,7 @@ Intelligent Citation Generator — FastAPI Backend
 """
 
 import os
+import re
 import uuid
 import aiofiles
 from fastapi import FastAPI, UploadFile, File, HTTPException
@@ -137,11 +138,17 @@ async def parse_paper_references(filename: str):
     Parse the references/bibliography section from a previously uploaded PDF.
     Returns a list of parsed references with APA citations.
     """
-    # Sanitize filename
-    if not filename.replace("-", "").replace("_", "").replace(".", "").isalnum():
+    # Sanitize filename — only allow hex characters and a .pdf extension
+    if not re.fullmatch(r"[0-9a-f]{32}\.pdf", filename):
         raise HTTPException(status_code=400, detail="Invalid filename.")
 
-    filepath = os.path.join(UPLOAD_DIR, filename)
+    upload_dir_abs = os.path.abspath(UPLOAD_DIR)
+    filepath = os.path.abspath(os.path.join(upload_dir_abs, filename))
+
+    # Prevent path traversal
+    if not filepath.startswith(upload_dir_abs + os.sep):
+        raise HTTPException(status_code=400, detail="Invalid filename.")
+
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="File not found. Please upload again.")
 
